@@ -11,10 +11,21 @@ if len(sys.argv) != 2:
 
 ips = open(sys.argv[1], 'r')
 
-for ip in ips:
-  cert = ssl.get_server_certificate((ip.strip(), 443))
-  x509 = OpenSSL.crypto.load_certificate(OpenSSL.crypto.FILETYPE_PEM, cert)
-  comps = x509.get_subject().get_components()
-  for comp in comps:
-    if comp[0].decode() == "CN":
-      print(comp[1].decode())
+for ipline in ips:
+
+  # check range
+  if ipline.contains('-'):
+    ip_start, ip_stop = ipline.split('-')
+    ip_range = iter_iprange(ip_start.strip(),ip_stop.strip())
+
+  # check cidr
+  if ipline.contains('/'):
+    ip_range = IPNetwork(ipline.strip())
+
+  for ip in ip_range:
+    cert = ssl.get_server_certificate((ip.strip(), 443))
+    x509 = OpenSSL.crypto.load_certificate(OpenSSL.crypto.FILETYPE_PEM, cert)
+    comps = x509.get_subject().get_components()
+    for comp in comps:
+      if comp[0].decode() == "CN":
+        print(comp[1].decode())
